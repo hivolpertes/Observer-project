@@ -1,0 +1,17 @@
+{
+    "contents" : "## Master file\n\n# 1. Compile data \n>> Data_reduction.R\n# Pares down columns from E-Prime file\n# Isolates experimental trials and writes to text file \nexperimentalTrials.txt\n# Separates WIT and AP trials and writes to separate text files \nWITdata.txt\nAPdata.txt\n\n# 2. Look for bad subjects\n>> exploreSubs.R\n# looks at meanRT and numCor for WIT and AP tasks by subject\n# Visualizes relationship between meanRT/numCor using scatterplots\n# Creates descriptions for mean, max, min for meanRT and numCor\n# Finds subjects with <80 correct trials (out of 192)\n\n# 3. Calculates number of errors on each type of trial\n>> calcRaceBias.R\n\n",
+    "created" : 1443812461243.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2493819122",
+    "id" : "AD9A848B",
+    "lastKnownWriteTime" : 1443826740,
+    "path" : "~/Documents/Projects/Observer study/Data/MasterFile.R",
+    "project_path" : "MasterFile.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

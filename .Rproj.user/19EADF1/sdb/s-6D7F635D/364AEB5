@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1443825902631.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "364AEB5",
+    "lastKnownWriteTime" : 140617486804992,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "errCount",
+        "contentUrl" : "content?title=errCount&file=3e02ca926add40448233c150c2d6315c.htm",
+        "displayedObservations" : "75",
+        "displayedVariables" : 13,
+        "totalObservations" : "75",
+        "variables" : "17"
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}

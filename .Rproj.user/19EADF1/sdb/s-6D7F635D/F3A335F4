@@ -1,0 +1,17 @@
+{
+    "contents" : "# Reduces data file to important columns\n# Isolates experimental trials, writes to .txt file\n# Separates WIT and AP blocks, write to separate .txt files\n\nrequire(dplyr)\nrequire(magrittr)\n\n# read in data\ndat = read.delim(\"ForRMerge76.txt\")\n\ndat.select = select(dat, \n                    Subject, \n                    Session,\n                    DemoAge.RESP,\n                    DemoEthnicity.RESP,\n                    DemoGender.RESP,\n                    DemoRace.RESP,\n                    responseMappingTool,\n                    responseMappingVal,\n                    Block, \n                    negResponse, \n                    posResponse,\n                    Procedure.Block.,\n                    toolResponse, \n                    weaponResponse,\n                    Trial,\n                    blockName,\n                    Practice.Trial.,\n                    SubTrial,\n                    CorrectResponse,\n                    facePictureFile,\n                    ITIDuration,\n                    PrimeType,\n                    responseAccData,\n                    rtFeedbackText,\n                    TargetAP.ACC,\n                    TargetAP.CRESP,\n                    TargetAP.RESP,\n                    TargetAP.RT,\n                    targetPictureFile,\n                    TargetType,\n                    TargetWIT.ACC,\n                    TargetWIT.CRESP,\n                    TargetWIT.RESP,\n                    TargetWIT.RT,\n                    targetWord)\n\n#select experimental trials (minus practice and questions)\nexpTrials = dat.select[dat.select$blockName == \"WIT\"|dat.select$blockName == \"AP\",]\n\nwrite.table(expTrials, file = \"experimentalTrials.txt\", sep = \"\\t\", row.names = F)\n\n\n\n# create separate data frames for each task and only include relevant columns\nWIT.dat = dat.select[dat.select$Procedure.Block. == \"WITproc\",] %>%\n  select(-responseMappingVal) %>%\n  select(-contains(\"TargetAP\")) %>%\n  select(-contains(\"pos\")) %>%\n  select(-contains(\"neg\")) %>%\n  select(-targetWord)\n\nAP.dat = dat.select[dat.select$Procedure.Block. == \"APproc\",] %>%\n  select(-responseMappingTool) %>%\n  select(-contains(\"TargetWIT\")) %>%\n  select(-contains(\"weapon\")) %>%\n  select(-contains(\"tool\")) %>%\n  select(-targetPictureFile)\n\nwrite.table(WIT.dat, file = \"WITdata.txt\", sep = \"\\t\", row.names = F)\nwrite.table(AP.dat, file = \"APdata.txt\", sep = \"\\t\", row.names = F)\n",
+    "created" : 1433450933952.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4036303005",
+    "id" : "F3A335F4",
+    "lastKnownWriteTime" : 1443812368,
+    "path" : "~/Documents/Projects/Observer study/Data/Data_reduction.R",
+    "project_path" : "Data_reduction.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}
