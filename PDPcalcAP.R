@@ -296,10 +296,13 @@ lm(MeanC ~ Effort, data = pdpAP) %>%
 
 # 8. Calculate resid score (White A partialed out of Black A)
 
-model = lm(Black_A ~ White_A, data = pdpAP)
-pdpAP$Resids = model$residuals
+model1 = lm(Black_A ~ White_A, data = pdpAP)
+pdpAP$AResids = model1$residuals
 
-write.table(select(pdpAP, Subject, Task, Observer, Black_C, Black_A, White_C, White_A, Total_C, Total_A, PDPbiasDiff, MeanC, Resids), 
+model2 = lm(Black_C ~ White_C, data = pdpAP)
+pdpAP$CResids = model2$residuals
+
+write.table(select(pdpAP, Subject, Task, Observer, Black_C, Black_A, White_C, White_A, MeanC, AResids, CResids), 
             file = "PDPestimatesAPwide.txt", sep = "\t", row.names = F)
 
 
@@ -310,7 +313,7 @@ require(tidyr)
 require(magrittr)
 require(dplyr)
 
-longAP = select(pdpAP, c(Black_C, Black_A, White_C, White_A, PDPbiasDiff, Total_C, Total_A, Observer, Subject)) %>%
+longAP = select(pdpAP, c(Black_C, Black_A, White_C, White_A, MeanC, AResids, CResids, Observer, Subject)) %>%
   gather(Subject, value, 1:7) # Subject is what you organize by, Estimate is new column that you create
 # 1:6 selects columns that you want to gather into Estimate column
 names(longAP)[3] = "Type"

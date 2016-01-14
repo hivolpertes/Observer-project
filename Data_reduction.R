@@ -51,6 +51,7 @@ expTrials = dat.select[dat.select$blockName == "WIT"|dat.select$blockName == "AP
 
 # adds MTCP scores
 MTCP = read.delim("MTCPscores.txt")
+# includes 5 subjects added after semester was over: 37, 45, 70, 73, 85
 
 # reverse score IMS_1
 MTCP$IMS_1.rev = NULL
@@ -61,7 +62,7 @@ for (i in unique(MTCP$Subject)) {
 
 MTCP = mutate(MTCP, IMS = (MTCP$IMS_1.rev + MTCP$IMS_2 + MTCP$IMS_3 + MTCP$IMS_4 + MTCP$IMS_5)/5)
 MTCP = mutate(MTCP, EMS = (MTCP$EMS_1 + MTCP$EMS_2 + MTCP$EMS_3 + MTCP$EMS_4 + MTCP$EMS_5)/5)
-# manually add IMS/EMS scores for subject 15 and 59
+# manually add IMS/EMS scores for subject 15 and 59 because of missing data on one item
 MTCP$EMS[MTCP$Subject == 15] = 1.8
 MTCP$IMS[MTCP$Subject == 59] = 2.3
 
