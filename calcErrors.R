@@ -212,6 +212,12 @@ for (i in unique(questDat$Subject)) {
   long$Attend[long$Subject == i & long$Task == "AP"] = questDat$Resp[questDat$Subject == i & 
                                                                          questDat$SubTrial == 4 &
                                                                          questDat$Task == "AP"]
+  long$Anx[long$Subject == i & long$Task == "WIT"] = questDat$Resp[questDat$Subject == i & 
+                                                                       questDat$SubTrial == 2 &
+                                                                       questDat$Task == "WIT"]
+  long$Anx[long$Subject == i & long$Task == "AP"] = questDat$Resp[questDat$Subject == i & 
+                                                                      questDat$SubTrial == 2 &
+                                                                      questDat$Task == "AP"]
 }
   
 

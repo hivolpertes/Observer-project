@@ -26,7 +26,7 @@ for (i in unique(dat$Subject)) {
 # In AP: 93 Ss total (47 absent, 46 present)
 
 
-# 2. Add effort and attend questions
+# 2. Add effort and attend questions (and anxiety question)
 questDat = read.delim("questDat.txt", stringsAsFactors=F) %>%
   rename(Resp = errorQSlide.RESP)
 questDat$Task[questDat$blockName == "PostWITquestions"] = "WIT"
@@ -45,6 +45,14 @@ for (i in unique(dat$Subject)) {
   dat$Attend[dat$Subject == i & dat$blockName == "AP"] = questDat$Resp[questDat$Subject == i & 
                                                           questDat$SubTrial == 4 &
                                                           questDat$Task == "AP"]
+  dat$Anx[dat$Subject == i & dat$blockName == "WIT"] = questDat$Resp[questDat$Subject == i & 
+                                                                          questDat$SubTrial == 2 &
+                                                                          questDat$Task == "WIT"]
+  dat$Anx[dat$Subject == i & dat$blockName == "AP"] = questDat$Resp[questDat$Subject == i & 
+                                                                         questDat$SubTrial == 2 &
+                                                                         questDat$Task == "AP"]
+  
+  
   
   
 }

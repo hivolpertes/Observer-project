@@ -44,12 +44,15 @@ aov(numErr ~ PrimeType*TargetType + Error(Subject/(PrimeType*TargetType)), data 
 # SS.effect/(SS.effect + SS.total)
 2883/(2883+2719) # partial eta-sq = .51
 
+# calculate error rates for table
+dat.cond.WIT = mutate(dat.cond.WIT, errRate = numErr/48)
 # means
-print(model.tables(aov(numErr ~ PrimeType*TargetType + Error(Subject/(PrimeType*TargetType)), data = dat.cond.WIT),
-                   "means"),se = TRUE, digits=3)
-# standard deviations
-sd(dat.cond.WIT$numErr[dat.cond.WIT$PrimeType == "black" & 
-                         dat.cond.WIT$TargetType == "gun"], na.rm = T)/48
+print(model.tables(aov(errRate ~ PrimeType*TargetType + Error(Subject/(PrimeType*TargetType)), data = dat.cond.WIT),
+                   "means"), se = TRUE, digits=3)
+
+# standard deviations 
+sd(dat.cond.WIT$errRate[dat.cond.WIT$PrimeType == "black" & 
+                         dat.cond.WIT$TargetType == "gun"], na.rm = T)
 
 ##### 1b. Look at simple contrasts in WIT
 require(dplyr)
@@ -88,13 +91,17 @@ aov(numErr ~ PrimeType*TargetType + # IVs of interest. In nonorthoganal design, 
 # Calculate partial etq-squared for 2 way interaction
 # SS.effect/(SS.effect + SS.total)
 1794/(1794+4145) # partial eta-sq = .30
-  
+
+
+# calculate error rates for table
+dat.cond.AP = mutate(dat.cond.AP, errRate = numErr/48)
+
 # means
-print(model.tables(aov(numErr ~ PrimeType*TargetType + Error(Subject/(PrimeType*TargetType)), data = dat.cond.AP),
+print(model.tables(aov(errRate ~ PrimeType*TargetType + Error(Subject/(PrimeType*TargetType)), data = dat.cond.AP),
                    "means"),se = TRUE, digits=3)
 # standard deviations
-sd(dat.cond.AP$numErr[dat.cond.AP$PrimeType == "black" & 
-                        dat.cond.AP$TargetType == "positive"], na.rm = T)/48
+sd(dat.cond.AP$errRate[dat.cond.AP$PrimeType == "white" & 
+                        dat.cond.AP$TargetType == "positive"], na.rm = T)
 
 
 
@@ -466,52 +473,9 @@ lm(WIT ~ AP*Type, data = SSC2) %>%
   summary()
 
 #######################################################################
-######################## Effect of observer ##############################
-######################## on performance bias ##############################
-#######################################################################
-
-# Add observer information to perfBias data
-dat.cond$Observer = as.character(dat.cond$Observer)
-for (i in unique(perfBias$Subject)) {
-  perfBias$Observer[perfBias$Subject == i] = dat.cond$Observer[dat.cond$TrialType == "WITnumErr_bw" &
-                                                                 dat.cond$Subject == i]
-}
-
-# rearrange to long form (just standardized data)
-pbLong = select(perfBias, -contains("con"), -contains("perfBias")) %>%
-  gather(Task,pbStand,2:3)                   # "Task" is what previous column names go into
-                                              # "pbStand" is what data points go into 
-
-
-ggplot(pbLong, aes(Task, pbStand, fill = Observer)) +
-  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  #  facet_wrap(~Task*Observer) + 
-  ggtitle("Performance bias (P(errors|incon) - P(errors|congruent))") +
-  labs(x = "Task", y = "Performance bias") +
-  theme(axis.title.x = element_text(face="bold", colour="#990000", size=20),
-        axis.title.y = element_text(face="bold", colour="#990000", size=20),
-        title = element_text(size=20),
-        axis.text.x  = element_text(vjust=0.5, size=16, color = "black")
-  )
-
-
-# change observer to factors for anovas
-pbLong$Observer = as.character(pbLong$Observer)
-
-# Omnibus ANOVA to examine effect of observer
-aov(pbStand ~ (Observer*Task) +Error(Subject/(Task)), data = pbLong) %>% 
-  summary()
-# Calculate partial etq-squared for main effect of observer
-# SS.effect/(SS.effect + SS.total)
-0.000001/(105.5) # partial eta-sq = 0
-
-# partial eta square for 2 way interaction
-2.17/(2.17+70.35)   # partial eta sq = .03
-
-#######################################################################
-######################## Effect of observer ##############################
-######################## on PDP estimates ##############################
+######################## Observer x IMS ##############################
+######################## multiple regressions ##############################
+######################## on perfBias, PDP estimates ##############################
 #######################################################################
 
 # rearrange data to half wide/half long form
@@ -533,7 +497,7 @@ temp2$Task = "AP"
 pdpStand2 = rbind(temp1, temp2)    
 
 
-# Add IMS/EMS data
+# Add IMS/EMS data and anxiety scores
 for (i in unique(pdpStand2$Subject)) {
   pdpStand2$IMS[pdpStand2$Subject == i] = dat.trial$IMS[dat.trial$Subject == i & 
                                                           dat.trial$SubTrial == 1 & 
@@ -541,6 +505,15 @@ for (i in unique(pdpStand2$Subject)) {
   pdpStand2$EMS[pdpStand2$Subject == i] = dat.trial$EMS[dat.trial$Subject == i & 
                                                           dat.trial$SubTrial == 1 & 
                                                           dat.trial$blockName == "WIT"]
+  pdpStand2$Anx[pdpStand2$Subject == i] = dat.trial$Anx[dat.trial$Subject == i & 
+                                                          dat.trial$SubTrial == 1 & 
+                                                          dat.trial$blockName == "WIT"]
+}
+
+# Add performance bias data
+for (i in unique(pdpStand2$Subject)) {
+  pdpStand2$perfBias[pdpStand2$Subject == i & pdpStand2$Task == "WIT"] = perfBias$WITperfBias[perfBias$Subject == i]
+  pdpStand2$perfBias[pdpStand2$Subject == i & pdpStand2$Task == "AP"] = perfBias$APperfBias[perfBias$Subject == i]
 }
 
 # Adjust classes of variables
@@ -563,64 +536,11 @@ length(unique(pdpStand2$Subject[!(is.na(pdpStand2$IMS)) &
 dat = pdpStand2[!(is.na(pdpStand2$IMS)) & !(is.na(pdpStand2$EMS)) & pdpStand2$Task == "AP",]
 cor(dat$IMS, dat$EMS)
 
-# Effect of observer on PDP estimates (auto)
-ggplot(pdpStand2, aes(Task, AResid, fill = Observer)) +
-  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  #  facet_wrap(~Task*Observer) + 
-  ggtitle("AResid") +
-  labs(x = "Task", y = "Task auto estimate") +
-  theme(axis.title.x = element_text(face="bold", colour="#990000", size=20),
-        axis.title.y = element_text(face="bold", colour="#990000", size=20),
-        title = element_text(size=20),
-        axis.text.x  = element_text(vjust=0.5, size=16, color = "black")
-  )
 
-# anova examine effect of observer on auto estimates in each task
-aov(AResid ~ Observer*Task + Error(Subject/(Task)), data = pdpStand2) %>% 
-  summary()
-# partial eta-squared for main effect of observer
-.34/(.34+109.56)
-
-# Effect of observer on PDP estimates (control)
-ggplot(pdpStand2, aes(Task, MeanC, fill = Observer)) +
-  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  #  facet_wrap(~Task*Observer) + 
-  ggtitle("MeanC") +
-  labs(x = "Task", y = "Task control estimate") +
-  theme(axis.title.x = element_text(face="bold", colour="#990000", size=20),
-        axis.title.y = element_text(face="bold", colour="#990000", size=20),
-        title = element_text(size=20),
-        axis.text.x  = element_text(vjust=0.5, size=16, color = "black")
-  )
-
-# anova examining effect of observer on control estimates in each task
-aov(MeanC ~ Observer*Task + Error(Subject/(Task)), data = pdpStand2) %>% 
-  summary()
-# partial eta-squared for main effect of observer
-.34/(.34+143.46) # partial eta sq = .002
-
-#######################################################################
-######################## IMS x Observer #################################
-######################## on PerfBias, AResid, MeanC #########################
-#######################################################################
-
-# Add IMS scores to performance bias
-
-for (i in unique(pbLong$Subject)) {
-  pbLong$IMS[pbLong$Subject == i] = dat.trial$IMS[dat.trial$Subject == i & 
-                                                          dat.trial$SubTrial == 1 & 
-                                                          dat.trial$blockName == "WIT"]
-  pbLong$EMS[pbLong$Subject == i] = dat.trial$EMS[dat.trial$Subject == i & 
-                                                          dat.trial$SubTrial == 1 & 
-                                                          dat.trial$blockName == "WIT"]
-}
-
-# PERFORMANCE BIAS
+########### PERFORMANCE BIAS ################################
 
 # IMS and perfBias separated by observer
-ggplot(pbLong, aes(IMS, pbStand, fill = Observer, col = Observer, pch = Observer)) +
+ggplot(pdpStand2, aes(IMS, perfBias, fill = Observer, col = Observer, pch = Observer)) +
   geom_point() +
   ggtitle("IMS/perfBias") +
   facet_wrap(~Task) +
@@ -636,12 +556,19 @@ ggplot(pbLong, aes(IMS, pbStand, fill = Observer, col = Observer, pch = Observer
         strip.text = element_text(size=24)
   )
 
+
 # Looking at three way interaction: IMS*Task*Observer (perfBias)
-lm(pbStand ~ IMS*Observer*Task, data = pbLong) %>%
+lm(perfBias ~ IMS*Observer*Task, data = pdpStand2) %>%
+  summary()
+
+# Looking at IMS*Task interaction within each level of observer
+lm(perfBias ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%
+  summary()
+lm(perfBias ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>%
   summary()
 
 
-# CONTROL ESTIMATE
+################ CONTROL ESTIMATE ####################
 
 # IMS and MeanC separated by observer
 ggplot(pdpStand2, aes(IMS, MeanC, fill = Observer, col = Observer, pch = Observer)) +
@@ -664,25 +591,25 @@ ggplot(pdpStand2, aes(IMS, MeanC, fill = Observer, col = Observer, pch = Observe
 lm(MeanC ~ IMS*Observer*Task, data = pdpStand2) %>%
   summary()
 
-# IMS*Observer interaction for control within each task
+# IMS*Task interaction for control within each level of observer
 ## WIT
-lm(MeanC ~ IMS*Observer, data = pdpStand2[pdpStand2$Task == "WIT",]) %>%
+lm(MeanC ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%
   summary()
 ## AP
-lm(MeanC ~ IMS*Observer, data = pdpStand2[pdpStand2$Task == "AP",]) %>%
+lm(MeanC ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>%
   summary()
 
 
 
 
 
-# BIAS ESTIMATE
+################# BIAS ESTIMATE ######################
 
 # IMS and AResid separated by observer
-ggplot(pdpStand2, aes(IMS, AResid, fill = Observer, col = Observer, pch = Observer)) +
+ggplot(pdpStand2, aes(IMS, AResid, fill = Task, col = Task, pch = Task)) +
   geom_point() +
   ggtitle("IMS/AResid") +
-  facet_wrap(~Task) +
+  facet_wrap(~Observer) +
   geom_smooth(method = "lm") +
   labs(y = "Stand. AResid estimate") +
   theme(axis.title.x = element_text(face="bold", colour="#990000", size=28),
@@ -709,14 +636,15 @@ lm(AResid ~ IMS*Observer, data = pdpStand2[pdpStand2$Task == "AP",]) %>%
   summary()
 
 
-# Separate by level of observer
-# Observer Absent
-ggplot(pdpStand2[pdpStand2$Observer == "Absent",], aes(IMS, AResid, fill = Task)) +
+
+
+######## Looking at the relationship between IMS and anxiety ######################
+ggplot(pdpStand2, aes(IMS, Anx)) +
   geom_point() +
-  ggtitle("IMS/AResid") +
-  #  facet_wrap(~Task) +
+  ggtitle("Relationship between IMS and Anxiety") +
+  facet_wrap(~Observer) +
   geom_smooth(method = "lm") +
-  labs(y = "Stand. AResid estimate") +
+  labs(y = "Anxiety") +
   theme(axis.title.x = element_text(face="bold", colour="#990000", size=28),
         axis.title.y = element_text(face="bold", colour="#990000", size=28),
         plot.title = element_text(size=28, vjust = 2, color = "white"),
@@ -727,79 +655,40 @@ ggplot(pdpStand2[pdpStand2$Observer == "Absent",], aes(IMS, AResid, fill = Task)
         strip.text = element_text(size=24)
   )
 
-# test 2 way interaction within Observer Absent
-lm(AResid ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>% 
+# IMS is significantly related to self-reported anxiety, regardless of whether observer is present
+lm(Anx ~ IMS*Observer, data = pdpStand2) %>%
   summary()
 
 
-# Observer Present
-ggplot(pdpStand2[pdpStand2$Observer == "Present",], aes(IMS, AResid, fill = Task, color = Task, pch = Task)) +
+
+
+
+########### FOR DATA BLITZ PRESENTATION ###############
+# Observer absent
+ggplot(pdpStand2[pdpStand2$Observer == "Absent",], aes(IMS, AResid, fill = Task, col = Task, pch = Task)) +
   geom_point() +
-  ggtitle("IMS/AResid") +
-#  facet_wrap(~Task) +
+  ggtitle("Observer absent") +
   geom_smooth(method = "lm") +
-  labs(y = "Stand. AResid estimate") +
-  theme(axis.title.x = element_text(face="bold", colour="#990000", size=28),
-        axis.title.y = element_text(face="bold", colour="#990000", size=28),
-        plot.title = element_text(size=28, vjust = 2, color = "white"),
-        plot.background = element_rect(fill = "black"),
+  labs(y = "PDP auto estimate") +
+  theme(axis.title.x = element_text(face="bold", size=28),
+           axis.title.y = element_text(face="bold", size=28),
+           plot.title = element_text(size=28, vjust = 2),
+           axis.text.x  = element_text(vjust=0.5, size=16),
+           legend.title = element_text(size=16),
+           legend.text = element_text(size=16)
+  )
+
+# Observer absent
+ggplot(pdpStand2[pdpStand2$Observer == "Present",], aes(IMS, AResid, fill = Task, col = Task, pch = Task)) +
+  geom_point() +
+  ggtitle("Observer present") +
+  geom_smooth(method = "lm") +
+  labs(y = "PDP auto estimate") +
+  theme(axis.title.x = element_text(face="bold", size=28),
+        axis.title.y = element_text(face="bold", size=28),
+        plot.title = element_text(size=28, vjust = 2),
         axis.text.x  = element_text(vjust=0.5, size=16),
         legend.title = element_text(size=16),
         legend.text = element_text(size=16),
-        strip.text = element_text(size=24)
+        plot.background = element_rect(line = "dashed")
   )
-
-# test 2 way interaction when Observer Present
-lm(AResid ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>% 
-  summary()
-
-
-
-
-
-
-
-# IMS/EMS on AResid, separated by task
-# only for observer present condition
-ggplot(pdpStand3[pdpStand3$Observer == "Present",], 
-       aes(score, AResid, fill = Task, col = Task, pch = Task)) +
-  geom_point() +
-  ggtitle("Observer present condition") +
-  labs(y = "Stand. AResid estimate") +
-  facet_wrap(~Estimate, scales = "free") +
-  geom_smooth(method = "lm") +
-  theme(axis.title.x = element_text(face="bold", colour="#990000", size=28),
-        axis.title.y = element_text(face="bold", colour="#990000", size=28),
-        plot.title = element_text(size=28, vjust = 2, color = "white"),
-        plot.background = element_rect(fill = "black"),
-        axis.text.x  = element_text(vjust=0.5, size=16),
-        legend.title = element_text(size=16),
-        legend.text = element_text(size=16), 
-        strip.text.x = element_text(size = 16, face="bold")
-  )
-
-# significant effect of EMS, no interaction
-lm(AResid ~ EMS, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%  
-  summary()
-
-lm(AResid ~ EMS*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%  
-  summary()
-
-
-# interaction is significant - p = (.026)
-lm(AResid ~ IMS, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%  
-  summary()
-lm(AResid ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%  
-  summary()
-
-# simple slopes for IMS in two tasks
-## WIT
-lm(AResid ~ IMS, data = pdpStand2[pdpStand2$Observer == "Present" &
-                                    pdpStand2$Task == "WIT",]) %>% summary()
-## AP
-lm(AResid ~ IMS, data = pdpStand2[pdpStand2$Observer == "Present" &
-                                    pdpStand2$Task == "AP",]) %>% summary()
-
-
-
-
