@@ -505,9 +505,15 @@ for (i in unique(pdpStand2$Subject)) {
   pdpStand2$EMS[pdpStand2$Subject == i] = dat.trial$EMS[dat.trial$Subject == i & 
                                                           dat.trial$SubTrial == 1 & 
                                                           dat.trial$blockName == "WIT"]
-  pdpStand2$Anx[pdpStand2$Subject == i] = dat.trial$Anx[dat.trial$Subject == i & 
+  pdpStand2$Anx[pdpStand2$Subject == i &
+                  pdpStand2$Task == "WIT"] = dat.trial$Anx[dat.trial$Subject == i & 
                                                           dat.trial$SubTrial == 1 & 
                                                           dat.trial$blockName == "WIT"]
+  pdpStand2$Anx[pdpStand2$Subject == i &
+                  pdpStand2$Task == "AP"] = dat.trial$Anx[dat.trial$Subject == i & 
+                                                             dat.trial$SubTrial == 1 & 
+                                                             dat.trial$blockName == "AP"]
+  
 }
 
 # Add performance bias data
@@ -639,10 +645,10 @@ lm(AResid ~ IMS*Observer, data = pdpStand2[pdpStand2$Task == "AP",]) %>%
 
 
 ######## Looking at the relationship between IMS and anxiety ######################
-ggplot(pdpStand2, aes(IMS, Anx)) +
+ggplot(pdpStand2, aes(IMS, Anx, color = Task)) +
   geom_point() +
   ggtitle("Relationship between IMS and Anxiety") +
-  facet_wrap(~Observer) +
+#  facet_wrap(~Task) +
   geom_smooth(method = "lm") +
   labs(y = "Anxiety") +
   theme(axis.title.x = element_text(face="bold", colour="#990000", size=28),
@@ -656,12 +662,20 @@ ggplot(pdpStand2, aes(IMS, Anx)) +
   )
 
 # IMS is significantly related to self-reported anxiety, regardless of whether observer is present
-lm(Anx ~ IMS*Observer, data = pdpStand2) %>%
+lm(Anx ~ IMS*Observer, data = pdpStand2[pdpStand2$Task == "WIT",]) %>%
   summary()
 
+lm(Anx ~ IMS, data = pdpStand2[pdpStand2$Task == "AP" & pdpStand2$Observer == "Present",]) %>%
+  summary()
 
+lm(Anx ~ IMS*Task*Observer, data = pdpStand2) %>%
+  summary()
 
+cor(pdpStand2$IMS[!(is.na(pdpStand2$IMS)) & pdpStand2$Observer == "Present"], 
+    pdpStand2$Anx[!(is.na(pdpStand2$IMS))& pdpStand2$Observer == "Present"])
 
+cor(pdpStand2$IMS[!(is.na(pdpStand2$IMS)) & pdpStand2$Observer == "Absent"], 
+    pdpStand2$Anx[!(is.na(pdpStand2$IMS))& pdpStand2$Observer == "Absent"])
 
 ########### FOR DATA BLITZ PRESENTATION ###############
 # Observer absent
