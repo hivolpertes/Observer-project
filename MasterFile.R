@@ -111,13 +111,13 @@ PDPestimatesAPlong.txt
 ############### Stream of files used for data write up #################################
 ########################################################################################
 
->> Data_reduction.R
+>> 1 Data_reduction.R
 # Pares down columns from E-Prime file
 # Adds MTCP scores (IMS/EMS)
 # Isolates experimental trials and writes to text file 
 experimentalTrials.txt #badsubs not taken out
 
->> exploreSubs.R
+>> 2 Determine bad subjects.R
 # Reads in
 experimentalTrials.txt #badsubs not taken out
 # Does lots of things, not immediately relevant
@@ -125,7 +125,7 @@ experimentalTrials.txt #badsubs not taken out
 badsubsAP.txt
 badsubsWIT.txt
 
->> prepforAnalysis.R
+>> 3 PrepForAnalysis.R
 # reads in 
 experimentalTrials.txt #badsubs not taken out
 # takes out badsubs data (only for relevant task) using 
@@ -139,10 +139,6 @@ badsubsWIT.txt
 ForAnalysis.txt #badsubs taken out, only on relevant task
 #### In WIT: 92 Ss total (47 obs-absent, 45 obs-present)
 #### In AP: 93 Ss total (47 obs-absent, 46 obs-present)
-
->> calcErrors.R
-# reads in 
-experimentalTrials.txt #badsubs not taken out
 # Has number of errors for each subject in each type of trial (black-gun, black-tool etc.) for both tasks
 # adds observer condition and attend/effort responses
 # adds congruent condition
@@ -150,8 +146,7 @@ experimentalTrials.txt #badsubs not taken out
 # Writes to
 errCountLong.txt #no badsubs
 
->> PDPcalcWIT.R
->> PDPcalcAP.R
+>> 4 PDPcalc.R
 # Calculates PDP estimates separately for different race primes, then collapsed across race prime
 # Adds self-reported attention and effort scores
 # Look at how C and A estimates are related to effort and attention
@@ -162,7 +157,7 @@ PDPestimatesWITwide.txt   # All data for one subject on one row. Column for Blac
 PDPestimatesAPlong.txt
 PDPestimatesAPwide.txt
 
->> AnalysesForWriteup.R
+>> 5 AnalysesForWriteup.R
 # reads in 
 ForAnalysis.txt #badsubs taken out
 errCountLong.txt #badsubs taken out

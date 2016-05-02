@@ -4,6 +4,6 @@
 15	"Not a native english speaker"	""
 36	"Not a native english speaker"	""
 39	"Not a native english speaker"	""
-34	"<60 correct trials"	""
-64	"<60 correct trials"	"Fell asleep"
+34	">2 sds below mean"	""
+64	">2 sds below mean"	"Fell asleep"
 53	"No data"	""
