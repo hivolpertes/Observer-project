@@ -32,24 +32,23 @@ questDat$Task[questDat$blockName == "PostWITquestions"] = "WIT"
 questDat$Task[questDat$blockName == "PostAPquestions"] = "AP"
 
 for (i in unique(dat$Subject)) {
-  dat$Effort[dat$Subject == i & dat$blockName == "WIT"] = questDat$Resp[questDat$Subject == i & 
-                                                                          questDat$SubTrial == 5 &
-                                                                          questDat$Task == "WIT"]
-  dat$Effort[dat$Subject == i & dat$blockName == "AP"] = questDat$Resp[questDat$Subject == i & 
-                                                                         questDat$SubTrial == 5 &
-                                                                         questDat$Task == "AP"]
-  dat$Attend[dat$Subject == i & dat$blockName == "WIT"] = questDat$Resp[questDat$Subject == i & 
-                                                                          questDat$SubTrial == 4 &
-                                                                          questDat$Task == "WIT"]
-  dat$Attend[dat$Subject == i & dat$blockName == "AP"] = questDat$Resp[questDat$Subject == i & 
-                                                                         questDat$SubTrial == 4 &
-                                                                         questDat$Task == "AP"]
-  dat$Anx[dat$Subject == i & dat$blockName == "WIT"] = questDat$Resp[questDat$Subject == i & 
-                                                                       questDat$SubTrial == 2 &
-                                                                       questDat$Task == "WIT"]
-  dat$Anx[dat$Subject == i & dat$blockName == "AP"] = questDat$Resp[questDat$Subject == i & 
-                                                                      questDat$SubTrial == 2 &
-                                                                      questDat$Task == "AP"]
+  for (j in c("WIT", "AP")) {
+    dat$Frust[dat$Subject == i & dat$blockName == j] = questDat$Resp[questDat$Subject == i & 
+                                                                     questDat$SubTrial == 1 &
+                                                                     questDat$Task == j]
+    dat$Anx[dat$Subject == i & dat$blockName == j] = questDat$Resp[questDat$Subject == i & 
+                                                                     questDat$SubTrial == 2 &
+                                                                     questDat$Task == j]
+    dat$Unpleas[dat$Subject == i & dat$blockName == j] = questDat$Resp[questDat$Subject == i & 
+                                                                        questDat$SubTrial == 3 &
+                                                                        questDat$Task == j]
+    dat$Attend[dat$Subject == i & dat$blockName == j] = questDat$Resp[questDat$Subject == i & 
+                                                                            questDat$SubTrial == 4 &
+                                                                            questDat$Task == j]
+    dat$Effort[dat$Subject == i & dat$blockName == j] = questDat$Resp[questDat$Subject == i & 
+                                                                        questDat$SubTrial == 5 &
+                                                                        questDat$Task == j]
+  }
 }
 
 # 3. Add column for congruence

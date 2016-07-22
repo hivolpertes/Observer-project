@@ -206,6 +206,7 @@ ggplot(dat.cond.nobs, aes(PrimeType, numErr, fill = ConType)) +
         axis.text.x = element_text(size = 12),
         axis.text.y = element_text(size = 12))
 
+ggsave("./Figures/Figure1.tiff")
 
 #######################################################################
 ############# Calculate perf bias scores ##############################
@@ -358,6 +359,19 @@ sd(longWITsep$value[longWITsep$PrimeType == "White" &
 sd(longWITsep$value[longWITsep$PrimeType == "White" & 
                       longWITsep$Estimate == "A"], na.rm = T)
 
+# Look at Race x Estimate x Task ANOVA
+subsBothTasks = unique(perfBias$Subject)
+
+temp1 = longWITsep[longWITsep$Subject %in% subsBothTasks,]
+temp1$Task = "WIT"
+temp2 = longAPsep[longAPsep$Subject %in% subsBothTasks,]
+temp2$Task = "APT"
+
+temp = rbind(temp1, temp2)
+
+aov(value ~ PrimeType*Estimate*Task + Error(Subject/(PrimeType*Estimate*Task)), data = temp) %>% 
+  summary()
+
 # 2. Look at comparisons across tasks
 
 # need to make data set with subjects that have both task data
@@ -397,11 +411,11 @@ pdpStand$AP_MeanC = scale(pdpBoth$AP_MeanC)
 pdpStand$AP_AResid = scale(pdpBoth$AP_AResid)
 pdpStand$AP_DiffA = scale(pdpBoth$AP_DiffA)
 
-# look at correlations of estimates between tasks - Mean C  # B = .61, p < .001
+# look at correlations of estimates between tasks - Mean C  # B = .62, p < .001
 lm(AP_MeanC ~ WIT_MeanC, data = pdpStand) %>%
   summary()
 
-# look at correlations of estimates between tasks - AResid  # B = .21, p = .026
+# look at correlations of estimates between tasks - AResid  # B = .23, p = .026
 lm(WIT_AResid ~ AP_AResid, data = pdpStand) %>%
   summary()
 
@@ -443,6 +457,8 @@ ggplot(SSC, aes(WIT, AP, pch = `Estimate Type`)) +
         legend.title = element_blank(),
         legend.key.size = unit(1.2, "cm"))
 
+ggsave("./Figures/Figure2.tiff")
+
 # Interaction represents whether simple slope of MeanC is different from AResid
 lm(WIT ~ AP*Type, data = SSC) %>%
   summary()
@@ -479,6 +495,8 @@ lm(WIT ~ AP*Type, data = SSC2) %>%
 
 lm(WIT ~ AP, data = SSC2[SSC2$Type == "DiffA",]) %>% 
   summary()
+lm(WIT ~ AP, data = SSC2[SSC2$Type == "MeanC",]) %>% 
+  summary()
 
 #######################################################################
 ######################## Observer x IMS ##############################
@@ -504,7 +522,7 @@ temp2$Task = "APT"
 # Bind WIT and AP data together
 pdpStand2 = rbind(temp1, temp2)    
 
-# Add IMS/EMS data and anxiety scores
+# Add IMS/EMS data
 for (i in unique(pdpStand2$Subject)) {
   pdpStand2$IMS[pdpStand2$Subject == i] = dat.trial$IMS[dat.trial$Subject == i & 
                                                           dat.trial$SubTrial == 1 & 
@@ -512,14 +530,9 @@ for (i in unique(pdpStand2$Subject)) {
   pdpStand2$EMS[pdpStand2$Subject == i] = dat.trial$EMS[dat.trial$Subject == i & 
                                                           dat.trial$SubTrial == 1 & 
                                                           dat.trial$blockName == "WIT"]
-  pdpStand2$Anx[pdpStand2$Subject == i &
-                  pdpStand2$Task == "WIT"] = dat.trial$Anx[dat.trial$Subject == i & 
-                                                             dat.trial$SubTrial == 1 & 
-                                                             dat.trial$blockName == "WIT"]
-  pdpStand2$Anx[pdpStand2$Subject == i &
-                  pdpStand2$Task == "APT"] = dat.trial$Anx[dat.trial$Subject == i & 
-                                                            dat.trial$SubTrial == 1 & 
-                                                            dat.trial$blockName == "AP"]
+  pdpStand2$IMS.EMS.diff[pdpStand2$Subject == i] = dat.trial$IMS.EMS.diff[dat.trial$Subject == i & 
+                                                          dat.trial$SubTrial == 1 & 
+                                                          dat.trial$blockName == "WIT"]
 }
 
 # Add performance bias data
@@ -544,9 +557,12 @@ length(unique(pdpStand2$Subject[!(is.na(pdpStand2$IMS)) &
 length(unique(pdpStand2$Subject[!(is.na(pdpStand2$IMS)) & 
                                   pdpStand2$Observer == "Absent"])) # 42 subjects
 
-# correlation between IMS and EMS: r = .12
-dat = pdpStand2[!(is.na(pdpStand2$IMS)) & !(is.na(pdpStand2$EMS)) & pdpStand2$Task == "AP",]
-cor(dat$IMS, dat$EMS)
+# correlation between IMS and EMS: r = .12, p = .262
+dat = pdpStand2[!(is.na(pdpStand2$IMS)) & !(is.na(pdpStand2$EMS)) & pdpStand2$Task == "APT",]
+lm(scale(IMS) ~ scale(EMS), data = dat) %>%
+  summary() 
+
+
 
 ########### PERFORMANCE BIAS ################################
 
@@ -571,6 +587,29 @@ lm(perfBias ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%
 lm(perfBias ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>%
   summary()
 
+# EMS and perfBias separated by observer
+ggplot(pdpStand2, aes(EMS, perfBias, fill = Observer, col = Observer, pch = Observer)) +
+  geom_point() +
+  #  ggtitle("EMS/perfBias") +
+  facet_wrap(~Task) +
+  geom_smooth(method = "lm") +
+  labs(y = "Performance Bias") +
+  theme_bw() +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"))
+
+lm(perfBias ~ scale(EMS)*Observer*Task, data = pdpStand2) %>% 
+  summary()
+
+lm(perfBias ~ scale(EMS)*Observer, data = pdpStand2[pdpStand2$Task == "APT",]) %>% 
+  summary()
+
+lm(perfBias ~ scale(EMS)*Observer, data = pdpStand2[pdpStand2$Task == "WIT",]) %>% 
+  summary()
+
+# What about IMS-EMS diff score? No effect
+lm(perfBias ~ scale(IMS.EMS.diff)*Observer*Task, data = pdpStand2) %>% 
+  summary()
 
 ################ CONTROL ESTIMATE ####################
 
@@ -596,6 +635,29 @@ lm(MeanC ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%
 lm(MeanC ~ IMS*Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>%
   summary()
 
+# EMS and MeanC separated by observer
+ggplot(pdpStand2, aes(EMS, MeanC, fill = Observer, col = Observer, pch = Observer)) +
+  geom_point() +
+  facet_wrap(~Task) +
+  geom_smooth(method = "lm") +
+  labs(y = "PDP-C Estimate") +
+  theme_bw() +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"))
+
+lm(MeanC ~ scale(EMS)*Observer*Task, data = pdpStand2) %>% # make sure to use standardized EMS to get stand. betas
+  summary()
+
+lm(MeanC ~ scale(EMS)*Observer, data = pdpStand2[pdpStand2$Task == "APT",]) %>% 
+  summary()
+
+lm(MeanC ~ scale(EMS)*Observer, data = pdpStand2[pdpStand2$Task == "WIT",]) %>% 
+  summary()
+
+# What about IMS-EMS diff score? No effect
+lm(MeanC ~ scale(IMS.EMS.diff)*Observer*Task, data = pdpStand2) %>% # make sure to use standardized EMS to get stand. betas
+  summary()
+
 ################# BIAS ESTIMATE (AResid) ######################
 obs_label <- c(Absent = "Observer Absent", Present = "Observer Present")
 
@@ -618,6 +680,8 @@ ggplot(pdpStand2, aes(IMS, AResid, pch = Task)) +
         legend.key.size = unit(1, "cm"),
         legend.key = element_rect(fill = "white"))
 
+ggsave("./Figures/Figure3.tiff")
+
 # Full three way interaction
 lm(AResid ~ scale(IMS)*Observer*Task, data = pdpStand2) %>% # use standardized IMS to get stand. betas
   summary()
@@ -630,10 +694,50 @@ lm(AResid ~ scale(IMS)*Task, data = pdpStand2[pdpStand2$Observer == "Present",])
 lm(AResid ~ scale(IMS)*Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>%
   summary()
 
+# Look at each level of observer separately
+## WIT
+lm(AResid ~ scale(IMS)*Observer, data = pdpStand2[pdpStand2$Task == "WIT",]) %>%
+  summary()
+## AP
+lm(AResid ~ scale(IMS)*Observer, data = pdpStand2[pdpStand2$Task == "APT",]) %>%
+  summary()
+
 # simple slopes
 lm(AResid ~ scale(IMS), data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Task == "APT",]) %>%
   summary()
 lm(AResid ~ scale(IMS), data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Task == "WIT",]) %>%
+  summary()
+
+
+# EMS and AResid separated by observer
+ggplot(pdpStand2, aes(EMS, AResid, pch = Task)) +
+  geom_point(aes(shape = Task), size = 2.5) +
+  scale_shape_manual(values=c(1,17)) +
+  scale_linetype_manual(values=c("solid", "dashed")) +
+  facet_wrap(~Observer, labeller=labeller(Observer = obs_label)) +
+  geom_smooth(method = "lm", aes(linetype=Task), color = "black") +
+  labs(y = "PDP-A estimate") +
+  theme_bw() +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"),
+        strip.text.x = element_text(face = "bold", size = 12),
+        strip.background = element_rect(fill = "grey98"),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.key.size = unit(1, "cm"),
+        legend.key = element_rect(fill = "white"))
+
+lm(AResid ~ scale(EMS)*Observer*Task, data = pdpStand2) %>% # use standardized EMS to get stand. betas
+  summary()
+
+lm(AResid ~ scale(EMS)*Task, data = pdpStand2[pdpStand2$Observer=="Present",]) %>% 
+  summary()
+
+lm(AResid ~ scale(EMS)*Task, data = pdpStand2[pdpStand2$Observer=="Absent",]) %>% 
+  summary()
+
+# What about IMS-EMS diff score?
+lm(AResid ~ scale(IMS.EMS.diff)*Observer*Task, data = pdpStand2) %>% # use standardized IMS to get stand. betas
   summary()
 
 
@@ -673,3 +777,184 @@ lm(DiffA ~ IMS, data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Tas
   summary()
 lm(DiffA ~ IMS, data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Task == "WIT",]) %>%
   summary()
+
+
+
+lm(DiffA ~ scale(EMS)*Observer*Task, data = pdpStand2) %>% # use standardized EMS to get stand. betas
+  summary()
+
+lm(DiffA ~ scale(EMS)*Task, data = pdpStand2[pdpStand2$Observer=="Present",]) %>% 
+  summary()
+
+lm(DiffA ~ scale(EMS)*Task, data = pdpStand2[pdpStand2$Observer=="Absent",]) %>% 
+  summary()
+
+
+
+
+# Investigating post-task questions ---------------------------------------
+
+# Add post-task questions
+dat.trial$blockName = as.character(dat.trial$blockName)
+dat.trial$blockName[dat.trial$blockName == "AP"] = "APT"
+dat.trial$blockName = as.factor(dat.trial$blockName)
+
+for (i in unique(pdpStand2$Subject)) {
+  for (j in c("WIT", "APT")) {
+    pdpStand2$Frust[pdpStand2$Subject == i &
+                    pdpStand2$Task == j] = mean(dat.trial$Frust[dat.trial$Subject == i &
+                                                                dat.trial$blockName == j])
+    pdpStand2$Anx[pdpStand2$Subject == i &
+                    pdpStand2$Task == j] = mean(dat.trial$Anx[dat.trial$Subject == i &
+                                                                dat.trial$blockName == j])
+    pdpStand2$Unpleas[pdpStand2$Subject == i &
+                    pdpStand2$Task == j] = mean(dat.trial$Unpleas[dat.trial$Subject == i &
+                                                                dat.trial$blockName == j])
+    pdpStand2$Attend[pdpStand2$Subject == i &
+                    pdpStand2$Task == j] = mean(dat.trial$Attend[dat.trial$Subject == i &
+                                                                dat.trial$blockName == j])
+    
+    pdpStand2$Effort[pdpStand2$Subject == i &
+                    pdpStand2$Task == j] = mean(dat.trial$Effort[dat.trial$Subject == i &
+                                                               dat.trial$blockName == j])
+  }
+}
+
+# correlation between attention and effort
+lm(scale(Attend) ~ scale(Effort), data = pdpStand2) %>% summary()
+
+# make average for composite of error-related negative feelings
+WIT$Err_comp = (WIT$Frust + WIT$Anx + WIT$Unpleas)/3
+APT$Err_comp = (APT$Frust + APT$Anx + APT$Unpleas)/3
+pdpStand2$Err_comp = (pdpStand2$Frust + pdpStand2$Anx + pdpStand2$Unpleas)/3
+
+
+# difference in composite error-related 
+tapply(WIT$Err_comp, WIT$Observer, mean)
+tapply(WIT$Err_comp, WIT$Observer, sd)
+tapply(APT$Err_comp, APT$Observer, mean)
+tapply(APT$Err_comp, APT$Observer, sd)
+
+tapply(WIT$Anx, WIT$Observer, mean)
+tapply(WIT$Anx, WIT$Observer, sd)
+tapply(APT$Anx, APT$Observer, mean)
+tapply(APT$Anx, APT$Observer, sd)
+
+# Does IMS predict anxiety?
+lm(scale(Anx) ~ scale(IMS) * Observer * Task, data = pdpStand2) %>%
+  summary() 
+
+APT = pdpStand2[pdpStand2$Task == "APT",]
+lm(scale(Anx) ~ scale(IMS) * Observer, data = APT) %>%
+  summary() 
+
+WIT = pdpStand2[pdpStand2$Task == "WIT",]
+lm(scale(Anx) ~ scale(IMS) * Observer, data = WIT) %>%
+  summary() 
+
+# Does IMS predict composite?
+lm(scale(Err_comp) ~ scale(IMS), data = pdpStand2) %>%
+  summary() 
+lm(scale(Err_comp) ~ scale(IMS) * Observer * Task, data = pdpStand2) %>%
+  summary() 
+lm(scale(Err_comp) ~ scale(IMS) * Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>%
+  summary() 
+lm(scale(Err_comp) ~ scale(IMS) * Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>%
+  summary() 
+
+
+# correlation table for post-task questions
+cor(APT[,11:15])
+cor(WIT[,11:15])
+
+# mean and sd of effort and attend questions
+mean(WIT$Attend)
+mean(WIT$Effort)
+
+mean(APT$Attend)
+mean(APT$Effort)
+
+# alpha of composite
+compWIT = pdpStand2[pdpStand2$Task == "WIT",11:13]
+compAPT = pdpStand2[pdpStand2$Task == "APT",11:13]
+
+require(psych)
+alpha(compWIT)
+alpha(compAPT)
+
+# Does anxiety predict PDP-C?
+lm(MeanC ~ scale(Anx)*Observer*Task, data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+
+# Does anxiety predict PDP-A?
+lm(AResid ~ scale(Anx)*Observer*Task, data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+
+lm(AResid ~ scale(Anx)*Observer, data = pdpStand2[pdpStand2$Task == "WIT",]) %>% # use standardized Anx to get stand. betas
+  summary()
+lm(AResid ~ scale(Anx)*Observer, data = pdpStand2[pdpStand2$Task == "APT",]) %>% # use standardized Anx to get stand. betas
+  summary()
+
+# Does anxiety predict perfBias?
+lm(perfBias ~ scale(Anx)*Observer*Task, data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+
+###
+# Does composite predict PDP-C?
+lm(MeanC ~ scale(Err_comp)*Observer*Task, data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+lm(MeanC ~ scale(Err_comp), data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+
+# Does composite predict PDP-A?
+lm(AResid ~ scale(Err_comp), data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+lm(AResid ~ scale(Err_comp)*Observer*Task, data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+lm(AResid ~ scale(Err_comp)*Task, data = pdpStand2[pdpStand2$Observer == "Present",]) %>% 
+  summary()
+lm(AResid ~ scale(Err_comp)*Task, data = pdpStand2[pdpStand2$Observer == "Absent",]) %>% 
+  summary()
+
+# Does composite predict perfBias?
+lm(perfBias ~ scale(Anx)*Observer*Task, data = pdpStand2) %>% # use standardized Anx to get stand. betas
+  summary()
+
+
+# Test IMS -> composite -> PDP-A mediation (separately for observer)
+
+lm(Err_comp ~ IMS, data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Task == "WIT",]) %>%
+  summary() 
+lm(AResid ~ Err_comp * IMS, data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Task == "WIT",]) %>% 
+  summary()
+
+lm(Err_comp ~ IMS, data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Task == "APT",]) %>%
+  summary() 
+lm(AResid ~ Err_comp * IMS, data = pdpStand2[pdpStand2$Observer == "Present" & pdpStand2$Task == "APT",]) %>% 
+  summary()
+
+lm(Err_comp ~ IMS, data = pdpStand2[pdpStand2$Observer == "Absent" & pdpStand2$Task == "WIT",]) %>%
+  summary() 
+lm(AResid ~ Err_comp * IMS, data = pdpStand2[pdpStand2$Observer == "Absent" & pdpStand2$Task == "WIT",]) %>% 
+  summary()
+
+lm(Err_comp ~ IMS, data = pdpStand2[pdpStand2$Observer == "Absent" & pdpStand2$Task == "APT",]) %>%
+  summary() 
+lm(AResid ~ Err_comp * IMS, data = pdpStand2[pdpStand2$Observer == "Absent" & pdpStand2$Task == "APT",]) %>% 
+  summary()
+
+
+########## mean RTs for each condition for Table 1 (just correct trials)
+
+WITtrial = dat.trial[dat.trial$Procedure.Block. == "WITproc" & dat.trial$responseAccData == 2,]
+WITtrial$Condition = paste(WITtrial$PrimeType, WITtrial$TargetType, sep="_")
+
+tapply(WITtrial$TargetWIT.RT, WITtrial$Condition, mean)
+tapply(WITtrial$TargetWIT.RT, WITtrial$Condition, sd)
+
+APTtrial = dat.trial[dat.trial$Procedure.Block. == "APproc" & dat.trial$responseAccData == 2,]
+APTtrial$Condition = paste(APTtrial$PrimeType, APTtrial$TargetType, sep="_")
+
+tapply(APTtrial$TargetAP.RT, APTtrial$Condition, mean)
+tapply(APTtrial$TargetAP.RT, APTtrial$Condition, sd)
+

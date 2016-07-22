@@ -54,17 +54,17 @@ MTCP = read.delim("MTCPscores.txt")
 # includes 5 subjects added after semester was over: 37, 45, 70, 73, 85
 
 # reverse score IMS_1
-MTCP$IMS_1.rev = NULL
+MTCP$IMS_1.rev = 10 - MTCP$IMS_1
 
-for (i in unique(MTCP$Subject)) {
-  MTCP$IMS_1.rev[MTCP$Subject == i] = 10 - MTCP$IMS_1[MTCP$Subject == i]
-}
-
+# create composite scores for IMS and EMS
 MTCP = mutate(MTCP, IMS = (MTCP$IMS_1.rev + MTCP$IMS_2 + MTCP$IMS_3 + MTCP$IMS_4 + MTCP$IMS_5)/5)
 MTCP = mutate(MTCP, EMS = (MTCP$EMS_1 + MTCP$EMS_2 + MTCP$EMS_3 + MTCP$EMS_4 + MTCP$EMS_5)/5)
 # manually add IMS/EMS scores for subject 15 and 59 because of missing data on one item
 MTCP$EMS[MTCP$Subject == 15] = 1.8
 MTCP$IMS[MTCP$Subject == 59] = 2.3
+
+# Make IMS-EMS diff score
+MTCP = mutate(MTCP, IMS.EMS.diff = IMS - EMS)
 
 # calculate alphas for IMS and EMS
 require(psych)
@@ -82,6 +82,7 @@ alpha(EMS)
 for (i in unique(expTrials$Subject)) {
   expTrials$IMS[expTrials$Subject == i] = MTCP$IMS[MTCP$Subject == i]
   expTrials$EMS[expTrials$Subject == i] = MTCP$EMS[MTCP$Subject == i]
+  expTrials$IMS.EMS.diff[expTrials$Subject == i] = MTCP$IMS.EMS.diff[MTCP$Subject == i]
 }
 
 write.table(expTrials, file = "experimentalTrials.txt", sep = "\t", row.names = F)
